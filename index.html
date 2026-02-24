@@ -11,6 +11,22 @@
     <style>
         body { margin:0; padding:0; }
         #map { height:100vh; width:100%; }
+
+        .popup-table {
+            border-collapse: collapse;
+            width: 250px;
+        }
+
+        .popup-table td {
+            border-bottom: 1px solid #ddd;
+            padding: 4px;
+            font-size: 13px;
+        }
+
+        .popup-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -37,7 +53,7 @@ var osm = L.tileLayer(
 
 var wmsUrl = "https://a11f-2a09-bac1-34a0-18-00-279-5a.ngrok-free.app/geoserver/webgis/wms";
 
-function createWMSLayer(layerName){
+function createWMS(layerName){
     return L.tileLayer.wms(wmsUrl, {
         layers: layerName,
         format: "image/png",
@@ -46,10 +62,10 @@ function createWMSLayer(layerName){
     });
 }
 
-var alignment = createWMSLayer("webgis:infra2_alignment");
-var station = createWMSLayer("webgis:infra2_station");
-var bm = createWMSLayer("webgis:infra2_bm");
-var sitelocation = createWMSLayer("webgis:infra2_sitelocation");
+var alignment = createWMS("webgis:infra2_alignment");
+var station = createWMS("webgis:infra2_station");
+var bm = createWMS("webgis:infra2_bm");
+var sitelocation = createWMS("webgis:infra2_sitelocation");
 
 // ==========================
 // LAYER CONTROL
@@ -71,58 +87,68 @@ L.control.layers(baseMaps, overlayMaps, {
 }).addTo(map);
 
 // ==========================
-// GET FEATURE INFO (NGROK SAFE)
+// GET FEATURE INFO (STATION ONLY)
 // ==========================
 
 map.on('click', function (e) {
 
     var size = map.getSize();
     var bounds = map.getBounds();
+    var crs = map.options.crs;
+
+    var sw = crs.project(bounds.getSouthWest());
+    var ne = crs.project(bounds.getNorthEast());
+    var bbox = sw.x + ',' + sw.y + ',' + ne.x + ',' + ne.y;
 
     var url = wmsUrl +
         '?SERVICE=WMS' +
         '&VERSION=1.1.1' +
         '&REQUEST=GetFeatureInfo' +
-        '&LAYERS=webgis:infra2_station,webgis:infra2_bm,webgis:infra2_sitelocation' +
-        '&QUERY_LAYERS=webgis:infra2_station,webgis:infra2_bm,webgis:infra2_sitelocation' +
+        '&LAYERS=webgis:infra2_station' +
+        '&QUERY_LAYERS=webgis:infra2_station' +
         '&STYLES=' +
-        '&BBOX=' + bounds.toBBoxString() +
+        '&BBOX=' + bbox +
         '&FEATURE_COUNT=5' +
         '&HEIGHT=' + size.y +
         '&WIDTH=' + size.x +
         '&FORMAT=image/png' +
-        '&INFO_FORMAT=text/html' +
+        '&INFO_FORMAT=application/json' +
         '&SRS=EPSG:3857' +
         '&X=' + Math.floor(e.containerPoint.x) +
         '&Y=' + Math.floor(e.containerPoint.y);
-
-    console.log("GetFeatureInfo URL:", url);
 
     fetch(url, {
         headers: {
             "ngrok-skip-browser-warning": "true"
         }
     })
-    .then(function(response){
-        return response.text();
-    })
-    .then(function(html){
+    .then(res => res.json())
+    .then(data => {
 
-        console.log("RAW RESPONSE:", html);
-
-        if(html && html.trim() !== ""){
-            L.popup()
-                .setLatLng(e.latlng)
-                .setContent(html)
-                .openOn(map);
-        } else {
+        if (!data.features || data.features.length === 0) {
             console.log("No feature found");
+            return;
         }
 
+        var props = data.features[0].properties;
+
+        var popupContent = `
+            <div class="popup-title">Station Detail</div>
+            <table class="popup-table">
+                <tr><td><b>Station</b></td><td>${props.station || "-"}</td></tr>
+                <tr><td><b>Northing</b></td><td>${props.northing || "-"}</td></tr>
+                <tr><td><b>Easting</b></td><td>${props.easting || "-"}</td></tr>
+                <tr><td><b>Project</b></td><td>${props.project || "-"}</td></tr>
+            </table>
+        `;
+
+        L.popup()
+            .setLatLng(e.latlng)
+            .setContent(popupContent)
+            .openOn(map);
+
     })
-    .catch(function(err){
-        console.log("FETCH ERROR:", err);
-    });
+    .catch(err => console.log("ERROR:", err));
 
 });
 
