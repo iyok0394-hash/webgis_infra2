@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>WebGIS Yosevel</title>
+    <title>WebGIS Infra 2</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -9,7 +9,8 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
     <style>
-        #map { height: 100vh; }
+        body { margin:0; padding:0; }
+        #map { height: 100vh; width: 100%; }
     </style>
 </head>
 <body>
@@ -17,17 +18,27 @@
 <div id="map"></div>
 
 <script>
+    // Inisialisasi map
     var map = L.map('map').setView([-6.2, 106.8], 11);
 
+    // Basemap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    L.tileLayer.wms("https://a11f-2a09-bac1-34a0-18-00-279-5a.ngrok-free.app/geoserver/webgis/wms", {
-        layers: "webgis:infra2_alignment",
-        format: "image/png",
-        transparent: true
-    }).addTo(map);
+    // WMS Layer GeoServer
+    var wmsLayer = L.tileLayer.wms(
+        "https://a11f-2a09-bac1-34a0-18-00-279-5a.ngrok-free.app/geoserver/webgis/wms",
+        {
+            layers: "webgis:infra2_alignment",
+            format: "image/png",
+            transparent: true,
+            version: "1.1.0",
+            srs: "EPSG:3857"
+        }
+    ).addTo(map);
+
+    console.log("WMS Layer Loaded");
 </script>
 
 </body>
