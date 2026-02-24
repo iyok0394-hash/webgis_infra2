@@ -21,14 +21,15 @@
 var map = L.map('map').setView([-6.2, 106.8], 12);
 
 // Basemap
-var basemap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-}).addTo(map);
+var basemap = L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { attribution: '© OpenStreetMap' }
+).addTo(map);
 
-// URL WMS
+// WMS URL (PASTIKAN masih sama dengan ngrok aktif kamu)
 var wmsUrl = "https://a11f-2a09-bac1-34a0-18-00-279-5a.ngrok-free.app/geoserver/webgis/wms";
 
-// Layer WMS
+// Layer definitions
 var alignment = L.tileLayer.wms(wmsUrl, {
     layers: "webgis:infra2_alignment",
     format: "image/png",
@@ -57,7 +58,14 @@ var sitelocation = L.tileLayer.wms(wmsUrl, {
     version: "1.1.0"
 });
 
-// Default tampil
+var bm = L.tileLayer.wms(wmsUrl, {
+    layers: "webgis:infra2_bm",
+    format: "image/png",
+    transparent: true,
+    version: "1.1.0"
+});
+
+// Default tampilkan centerline
 alignment.addTo(map);
 
 // Layer control
@@ -65,7 +73,8 @@ var overlayMaps = {
     "Centerline": alignment,
     "Station": station,
     "ROW": row,
-    "Site Location": sitelocation
+    "Site Location": sitelocation,
+    "Benchmark": bm
 };
 
 L.control.layers(null, overlayMaps).addTo(map);
