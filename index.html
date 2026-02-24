@@ -44,13 +44,6 @@ var station = L.tileLayer.wms(wmsUrl, {
     version: "1.1.0"
 });
 
-var row = L.tileLayer.wms(wmsUrl, {
-    layers: "webgis:infra2_row",
-    format: "image/png",
-    transparent: true,
-    version: "1.1.0"
-});
-
 var sitelocation = L.tileLayer.wms(wmsUrl, {
     layers: "webgis:infra2_sitelocation",
     format: "image/png",
@@ -72,7 +65,6 @@ alignment.addTo(map);
 var overlayMaps = {
     "Centerline": alignment,
     "Station": station,
-    "ROW": row,
     "Site Location": sitelocation,
     "Benchmark": bm
 };
