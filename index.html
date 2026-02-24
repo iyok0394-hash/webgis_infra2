@@ -20,7 +20,7 @@
 <script>
 
 // ==========================
-// MAP INIT
+// INIT MAP
 // ==========================
 
 var map = L.map('map').setView([-6.2, 106.8], 12);
@@ -71,7 +71,7 @@ L.control.layers(baseMaps, overlayMaps, {
 }).addTo(map);
 
 // ==========================
-// GET FEATURE INFO POPUP
+// GET FEATURE INFO (HTML MODE)
 // ==========================
 
 map.on('click', function (e) {
@@ -91,7 +91,7 @@ map.on('click', function (e) {
         '&HEIGHT=' + size.y +
         '&WIDTH=' + size.x +
         '&FORMAT=image/png' +
-        '&INFO_FORMAT=application/json' +
+        '&INFO_FORMAT=text/html' +
         '&SRS=EPSG:3857' +
         '&X=' + Math.floor(e.containerPoint.x) +
         '&Y=' + Math.floor(e.containerPoint.y);
@@ -100,35 +100,17 @@ map.on('click', function (e) {
 
     fetch(url)
         .then(function(response){
-            return response.text(); // ambil raw dulu
+            return response.text();
         })
-        .then(function(text){
+        .then(function(html){
 
-            console.log("RAW RESPONSE:", text);
-
-            try {
-                var data = JSON.parse(text);
-
-                if (data.features && data.features.length > 0) {
-
-                    var props = data.features[0].properties;
-                    var content = "<b>Detail:</b><br>";
-
-                    Object.keys(props).forEach(function(key){
-                        content += "<b>" + key + ":</b> " + props[key] + "<br>";
-                    });
-
-                    L.popup()
-                        .setLatLng(e.latlng)
-                        .setContent(content)
-                        .openOn(map);
-
-                } else {
-                    console.log("No feature found");
-                }
-
-            } catch (err) {
-                console.log("Response is not JSON (likely XML error from GeoServer)");
+            if(html && html.trim() !== ""){
+                L.popup()
+                    .setLatLng(e.latlng)
+                    .setContent(html)
+                    .openOn(map);
+            } else {
+                console.log("No feature found");
             }
 
         })
