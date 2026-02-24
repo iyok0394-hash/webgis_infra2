@@ -1,67 +1,41 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>WebGIS Infra 2</title>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-    <style>
-        body { margin:0; padding:0; }
-        #map { height: 100vh; width: 100%; }
-    </style>
-</head>
-<body>
-
-<div id="map"></div>
-
 <script>
 var map = L.map('map').setView([-6.2, 106.8], 12);
 
-// Basemap
 var basemap = L.tileLayer(
     'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     { attribution: '© OpenStreetMap' }
 ).addTo(map);
 
-// WMS URL (PASTIKAN masih sama dengan ngrok aktif kamu)
 var wmsUrl = "https://a11f-2a09-bac1-34a0-18-00-279-5a.ngrok-free.app/geoserver/webgis/wms";
 
-// Layer definitions
 var alignment = L.tileLayer.wms(wmsUrl, {
     layers: "webgis:infra2_alignment",
     format: "image/png",
     transparent: true,
     version: "1.1.0"
-});
+}).addTo(map);
 
 var station = L.tileLayer.wms(wmsUrl, {
     layers: "webgis:infra2_station",
     format: "image/png",
     transparent: true,
     version: "1.1.0"
-});
+}).addTo(map);
 
 var sitelocation = L.tileLayer.wms(wmsUrl, {
     layers: "webgis:infra2_sitelocation",
     format: "image/png",
     transparent: true,
     version: "1.1.0"
-});
+}).addTo(map);
 
 var bm = L.tileLayer.wms(wmsUrl, {
     layers: "webgis:infra2_bm",
     format: "image/png",
     transparent: true,
     version: "1.1.0"
-});
+}).addTo(map);
 
-// Default tampilkan centerline
-alignment.addTo(map);
-
-// Layer control
 var overlayMaps = {
     "Centerline": alignment,
     "Station": station,
@@ -70,8 +44,4 @@ var overlayMaps = {
 };
 
 L.control.layers(null, overlayMaps).addTo(map);
-
 </script>
-
-</body>
-</html>
