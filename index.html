@@ -83,7 +83,12 @@ L.control.layers(baseMaps, overlayMaps, {
 
     // === WMS GetFeatureInfo Popup ===
 
+// === WMS GetFeatureInfo Popup (FIXED CRS) ===
+
 map.on('click', function (e) {
+
+    var size = map.getSize();
+    var bounds = map.getBounds();
 
     var url = wmsUrl +
         '?service=WMS&version=1.1.1&request=GetFeatureInfo' +
@@ -91,20 +96,20 @@ map.on('click', function (e) {
         '&query_layers=webgis:infra2_station,webgis:infra2_bm,webgis:infra2_sitelocation' +
         '&info_format=application/json' +
         '&feature_count=5' +
-        '&srs=EPSG:4326' +
+        '&srs=EPSG:3857' +
         '&bbox=' + map.getBounds().toBBoxString() +
-        '&width=' + map.getSize().x +
-        '&height=' + map.getSize().y +
+        '&width=' + size.x +
+        '&height=' + size.y +
         '&x=' + Math.floor(e.containerPoint.x) +
         '&y=' + Math.floor(e.containerPoint.y);
 
     fetch(url)
         .then(response => response.json())
         .then(data => {
-            if (data.features.length > 0) {
+
+            if (data.features && data.features.length > 0) {
 
                 var props = data.features[0].properties;
-
                 var popupContent = "<b>Detail:</b><br>";
 
                 for (var key in props) {
@@ -116,7 +121,8 @@ map.on('click', function (e) {
                     .setContent(popupContent)
                     .openOn(map);
             }
-        });
+        })
+        .catch(err => console.log(err));
 });
 </script>
 
