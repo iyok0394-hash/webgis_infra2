@@ -18,27 +18,58 @@
 <div id="map"></div>
 
 <script>
-    // Inisialisasi map
-    var map = L.map('map').setView([-6.2, 106.8], 11);
+var map = L.map('map').setView([-6.2, 106.8], 12);
 
-    // Basemap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-    }).addTo(map);
+// Basemap
+var basemap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+}).addTo(map);
 
-    // WMS Layer GeoServer
-    var wmsLayer = L.tileLayer.wms(
-        "https://a11f-2a09-bac1-34a0-18-00-279-5a.ngrok-free.app/geoserver/webgis/wms",
-        {
-            layers: "webgis:infra2_alignment",
-            format: "image/png",
-            transparent: true,
-            version: "1.1.0",
-            srs: "EPSG:3857"
-        }
-    ).addTo(map);
+// URL WMS
+var wmsUrl = "https://a11f-2a09-bac1-34a0-18-00-279-5a.ngrok-free.app/geoserver/webgis/wms";
 
-    console.log("WMS Layer Loaded");
+// Layer WMS
+var alignment = L.tileLayer.wms(wmsUrl, {
+    layers: "webgis:infra2_alignment",
+    format: "image/png",
+    transparent: true,
+    version: "1.1.0"
+});
+
+var station = L.tileLayer.wms(wmsUrl, {
+    layers: "webgis:infra2_station",
+    format: "image/png",
+    transparent: true,
+    version: "1.1.0"
+});
+
+var row = L.tileLayer.wms(wmsUrl, {
+    layers: "webgis:infra2_row",
+    format: "image/png",
+    transparent: true,
+    version: "1.1.0"
+});
+
+var sitelocation = L.tileLayer.wms(wmsUrl, {
+    layers: "webgis:infra2_sitelocation",
+    format: "image/png",
+    transparent: true,
+    version: "1.1.0"
+});
+
+// Default tampil
+alignment.addTo(map);
+
+// Layer control
+var overlayMaps = {
+    "Centerline": alignment,
+    "Station": station,
+    "ROW": row,
+    "Site Location": sitelocation
+};
+
+L.control.layers(null, overlayMaps).addTo(map);
+
 </script>
 
 </body>
