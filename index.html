@@ -19,6 +19,10 @@
 
 <script>
 
+// ==========================
+// MAP INIT
+// ==========================
+
 var map = L.map('map').setView([-6.2, 106.8], 12);
 
 // Basemap
@@ -27,10 +31,11 @@ var osm = L.tileLayer(
     { attribution: '© OpenStreetMap' }
 ).addTo(map);
 
-// WMS URL (PASTIKAN HTTPS & URL NGROK AKTIF)
-var wmsUrl = "https://a11f-2a09-bac1-34a0-18-00-279-5a.ngrok-free.app/geoserver/webgis/wms";
+// ==========================
+// WMS CONFIG
+// ==========================
 
-// === WMS Layers ===
+var wmsUrl = "https://a11f-2a09-bac1-34a0-18-00-279-5a.ngrok-free.app/geoserver/webgis/wms";
 
 function createWMSLayer(layerName){
     return L.tileLayer.wms(wmsUrl, {
@@ -46,7 +51,9 @@ var station = createWMSLayer("webgis:infra2_station");
 var bm = createWMSLayer("webgis:infra2_bm");
 var sitelocation = createWMSLayer("webgis:infra2_sitelocation");
 
-// === Layer Control ===
+// ==========================
+// LAYER CONTROL
+// ==========================
 
 var baseMaps = {
     "OpenStreetMap": osm
@@ -63,63 +70,70 @@ L.control.layers(baseMaps, overlayMaps, {
     collapsed: false
 }).addTo(map);
 
-// ===========================================
-// WMS GetFeatureInfo (WORKING VERSION)
-// ===========================================
+// ==========================
+// GET FEATURE INFO POPUP
+// ==========================
 
 map.on('click', function (e) {
 
-    var point = map.latLngToContainerPoint(e.latlng, map.getZoom());
     var size = map.getSize();
     var bounds = map.getBounds();
 
-    var params = {
-        request: 'GetFeatureInfo',
-        service: 'WMS',
-        srs: 'EPSG:3857',
-        styles: '',
-        transparent: true,
-        version: '1.1.1',
-        format: 'image/png',
-        bbox: bounds.toBBoxString(),
-        height: size.y,
-        width: size.x,
-        layers: 'webgis:infra2_station,webgis:infra2_bm,webgis:infra2_sitelocation',
-        query_layers: 'webgis:infra2_station,webgis:infra2_bm,webgis:infra2_sitelocation',
-        info_format: 'application/json',
-        x: Math.round(point.x),
-        y: Math.round(point.y)
-    };
-
-    var url = wmsUrl + L.Util.getParamString(params, wmsUrl, true);
+    var url = wmsUrl +
+        '?SERVICE=WMS' +
+        '&VERSION=1.1.1' +
+        '&REQUEST=GetFeatureInfo' +
+        '&LAYERS=webgis:infra2_station,webgis:infra2_bm,webgis:infra2_sitelocation' +
+        '&QUERY_LAYERS=webgis:infra2_station,webgis:infra2_bm,webgis:infra2_sitelocation' +
+        '&STYLES=' +
+        '&BBOX=' + bounds.toBBoxString() +
+        '&FEATURE_COUNT=5' +
+        '&HEIGHT=' + size.y +
+        '&WIDTH=' + size.x +
+        '&FORMAT=image/png' +
+        '&INFO_FORMAT=application/json' +
+        '&SRS=EPSG:3857' +
+        '&X=' + Math.floor(e.containerPoint.x) +
+        '&Y=' + Math.floor(e.containerPoint.y);
 
     console.log("GetFeatureInfo URL:", url);
 
     fetch(url)
-        .then(function(response){ return response.json(); })
-        .then(function(data){
+        .then(function(response){
+            return response.text(); // ambil raw dulu
+        })
+        .then(function(text){
 
-            console.log("Response:", data);
+            console.log("RAW RESPONSE:", text);
 
-            if (data.features && data.features.length > 0) {
+            try {
+                var data = JSON.parse(text);
 
-                var props = data.features[0].properties;
-                var content = "<b>Detail:</b><br>";
+                if (data.features && data.features.length > 0) {
 
-                Object.keys(props).forEach(function(key){
-                    content += "<b>" + key + ":</b> " + props[key] + "<br>";
-                });
+                    var props = data.features[0].properties;
+                    var content = "<b>Detail:</b><br>";
 
-                L.popup()
-                    .setLatLng(e.latlng)
-                    .setContent(content)
-                    .openOn(map);
-            } else {
-                console.log("No feature found");
+                    Object.keys(props).forEach(function(key){
+                        content += "<b>" + key + ":</b> " + props[key] + "<br>";
+                    });
+
+                    L.popup()
+                        .setLatLng(e.latlng)
+                        .setContent(content)
+                        .openOn(map);
+
+                } else {
+                    console.log("No feature found");
+                }
+
+            } catch (err) {
+                console.log("Response is not JSON (likely XML error from GeoServer)");
             }
+
         })
         .catch(function(err){
-            console.log("ERROR:", err);
+            console.log("FETCH ERROR:", err);
         });
 
 });
